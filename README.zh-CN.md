@@ -1,5 +1,7 @@
 # SpektraLab
 
+> 本仓库的 Windows / Android 版本请阅读 [跨平台说明与下载](README.md)。以下保留上游 macOS 文档，不代表本版已实现全部功能。
+
 [English](README.md) · **简体中文** · [spektralab.app](https://spektralab.app)
 
 macOS 上的胶片与放大相纸模拟器。打开一张 RAW，选好胶片和相纸，约一秒内得到一张按物理过程建模的照片——颗粒、光晕、成色剂耦合、放大机滤色，一样不少。

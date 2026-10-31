@@ -9,9 +9,7 @@
 name: Build
 
 on:
-  push:
-    branches: [main]
-  pull_request:
+  # The original macOS build remains available manually in this fork.
   workflow_dispatch:
 
 concurrency:

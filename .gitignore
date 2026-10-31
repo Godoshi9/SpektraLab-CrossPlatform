@@ -371,3 +371,14 @@ desktop/src-tauri/host-staging/
 desktop/test-results/
 desktop/playwright-report/
 desktop/src-tauri/tauri.bundle.json
+
+# Cross-platform generated artifacts and private Android signing material.
+crossplatform/windows/bin/
+crossplatform/windows/obj/
+crossplatform/android/.gradle/
+crossplatform/android/local.properties
+crossplatform/.signing/
+*.jks
+*.keystore
+!crossplatform/windows/app.manifest
+!crossplatform/native/utf8.manifest

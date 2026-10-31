@@ -29,10 +29,7 @@ name: Desktop (Linux, Windows)
 # push runs this. A pull_request run reads the workflow from its base branch's
 # merge, so the filter below keeps PRs into main off the Windows runners too.
 on:
-  push:
-    branches: [Windows_Linux]
-  pull_request:
-    branches: [Windows_Linux]
+  # The original Tauri desktop build remains available manually in this fork.
   workflow_dispatch:
 
 concurrency:

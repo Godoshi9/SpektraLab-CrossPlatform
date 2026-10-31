@@ -1,162 +1,66 @@
-# SpektraLab
+# SpektraLab CrossPlatform
 
-**English** · [简体中文](README.zh-CN.md) · [spektralab.app](https://spektralab.app)
+面向 **Windows 和 Android** 的本地胶片模拟应用。深色橄榄灰界面、浅绿色按钮，两端共用同一套 UI；Windows 使用侧边调节栏，手机使用下方调节面板。
 
-A film and print simulator for macOS. Open a RAW, pick a film and a paper,
-and get a physically modelled print — grain, halation, couplers, the enlarger's
-filter pack — in about a second.
+基于 [JamesQiu2005/SpektraLab](https://github.com/JamesQiu2005/SpektraLab) 的 `Windows_Linux` 分支，保留原生 C++ / Vulkan 模型与原始配置数据。这是独立的社区移植版，不是上游官方发行版。
 
-![SpektraLab: Lower Manhattan on Kodak Portra 160, printed on Kodak Vision 2383](screenshots/Screenshot_English.png)
+**[下载安装包](https://github.com/Godoshi9/SpektraLab-CrossPlatform/releases/latest)** · [构建说明](crossplatform/README.md) · [验证记录](crossplatform/docs/VALIDATION.md)
 
-- **Spectral, not a LUT.** Light is traced through 81 wavelengths, the film's
-  dye layers and the paper's, the way a darkroom does it.
-- **Physical units.** Tell it the negative is 120 or 35 mm and the grain,
-  halation and coupler diffusion scale with the frame in micrometres.
-- **Fast.** A C++ Metal engine compiled into the app: a 45 MP reprint in
-  ~0.01 s at preview size, a full-resolution render in under a second.
-- **One colour pipeline.** ProPhoto RGB throughout; each export is gamut-mapped
-  once into the space you ask for, and proofed before it is written.
-- **The film itself.** Film Edge prints the frame on its own strip — rebate,
-  perforations, each stock's edge print and frame numbers, measured on real
-  strips — in 135, half frame, XPan, 645 to 6×9, 6×12 and 6×17. Date Back
-  exposes a date onto the negative.
-- **Half-frame pairs.** Two frames on one piece of film, side by side or one
-  above the other, each with its own exposure, white balance, print and grade.
-- **Scriptable.** `spektralab` (CLI) and an MCP server drive the same session
-  the window does. Off until enabled in Settings.
+## 使用
 
-| RAW decode ⟷ film and paper (⌥\\) | grain at 1:1 |
-|---|---|
-| ![Before and after](screenshots/natural_halation.png) | ![Grain at 1:1](screenshots/physically_accurate_grain.png) |
+1. 导入 JPEG、PNG 或受 LibRaw 支持的相机 RAW。
+2. 选择胶片与相纸，调整照片明暗、胶片曝光、印相色温和色调。
+3. 按需调整颗粒、光晕、相纸辉光和胶片画幅。
+4. 使用原图 / 效果 / 分割对比查看变化，导出 PNG 或 JPEG。
 
-## Install
+包含 **25 款胶片、9 款相纸**，包括彩色负片、正片、黑白与 CineStill 800T。照片在本机处理，不需要登录或上传。导入或渲染失败会保留上一张可用图像。
 
-Download the DMG from [spektralab.app](https://spektralab.app) or
-[Releases](https://github.com/JamesQiu2005/SpektraLab/releases), open it and
-drag SpektraLab to Applications. It is signed with a Developer ID and
-notarised by Apple, so it opens like any other app.
+Windows 快捷键：`Ctrl+O` 导入，`Ctrl+E` 导出，`Ctrl+Z` 撤销，按住空格查看原图。界面提供重置、胶片搜索和 100% 查看。
 
-Apple silicon, macOS 15 or later.
+## 安装
 
-Releases before 1.3.3 are ad-hoc signed. For one of those, clear the
-quarantine once:
+| 平台 | 文件 | 要求 |
+|---|---|---|
+| Windows | `SpektraLab-0.1.0-Windows-x64-Setup.exe` | Windows 10 1903+ / Windows 11，x64，Vulkan 显卡驱动，Microsoft Edge WebView2 Runtime |
+| Windows 免安装 | `SpektraLab-0.1.0-Windows-x64-Portable.zip` | 解压完整文件夹，运行 `SpektraLab.exe`；不要单独移动 exe |
+| Android | `SpektraLab-0.1.0-Android.apk` | Android 9+、ARM64；也包含 x86_64 库；需要可用的 Vulkan compute 驱动 |
 
-```bash
-xattr -d -r com.apple.quarantine /Applications/SpektraLab.app
-```
+Windows 包含 .NET 8.0.33 运行时。Android 使用系统文件选择器，无需整个存储空间的访问权限。APK 使用项目独立发布密钥签名；Windows 安装包未做商业代码签名。
 
-## Select and sync photos
+## 当前版本范围
 
-Click a photo to make it the current photo, then Command-click other photos to
-add or remove them without moving the current photo. Command+A (Edit → Select
-All Photos) selects the library and keeps the current photo as the sync source.
-In a newly opened folder it opens the first photo. Command+A inside a text field
-still selects text.
+这是 **0.1.0 首个可运行版本**，实现单张照片的核心编辑流程，并非 macOS 应用全部功能的移植。
 
-Under Settings Clipboard, tick the groups to transfer and choose **Sync to N**
-(or Edit → Sync Settings). This reads the current photo's latest edits, preserves
-the clipboard and source photo, and saves the other selected photos immediately.
-They develop with those settings when opened. Crop, Post-Dev adjustments, lens
-correction, Film Edge and Date Back stay with each photo, following the existing
-clipboard rules. As Shot white balance and fitted Scene Placement are resolved
-for each target. Sync has no batch undo; the status reports writes and failures.
-Selection and sync are disabled during batch export.
+- 输出为 **sRGB、8-bit PNG/JPEG**。工作图像最长边上限：Windows **4096 px**，Android **2048 px**。较大图像导入时缩小，界面显示实际导出尺寸。RAW 解码仍可能占用较多内存。
+- 尚无批量图库、项目持久化、裁切、曲线、Film Edge、Date Back、HDR 或 16-bit 导出界面。撤销记录仅保存在本次会话中。
+- RAW 使用 LibRaw 0.22.2 兼容解码路径；Nikon HE/HE* 不支持。未对全部相机格式和手机 GPU 做实机验证。
+- Android 已在 x86_64 模拟器完成真实原生渲染与导出验证。ARM64 包已交叉编译并校验签名，需要具体手机上的兼容性测试。
+- sRGB 预览不等同于 macOS ColorSync / HDR 显示链的色彩验证；导出不携带源 EXIF。
 
-## Film Edge, Date Back and half-frame pairs
+## 界面
 
-**Film Edge** (left rail) turns the canvas into the film: pick a format and the
-frame is cut to its gate and shown on the strip, with the stock's own edge
-print and a frame number you can set; a strip scan ends at the film's edges.
-The crop becomes the framing in the gate, so it is part of the
-negative. **Date Back** exposes the shooting date (or a date you type) into the
-frame; it needs no film edge. With one, it can print the shooting data beside
-the frame at the same time, and on 120 (645 to 6×9) the date and the data go
-in the film margin, where a medium-format back printed them.
+以下来自运行中的应用，使用合成测试图检验渲染、方向与导出，不是产品照片效果示例。
 
-**A half-frame pair** is two frames on one frame's worth of 135. With Film Edge
-on *Half*, **Enter Half-Frame Pair** appears under the format (or pick two
-photos and press ⌘J). The canvas shows two holes; an empty one has a **+**.
-Click a hole to pick its frame: Input / Camera, Scene Placement, the Enlarger
-and Post-Dev then act on that frame alone, and *+ Film* moves the film around
-it too. Right-click a hole to replace, turn or crop its frame. In the crop
-mode, drag moves the picture under its hole and scroll or pinch scales it about
-the pointer. A pair is one item in the filmstrip and exports as one picture.
+![Windows 界面](crossplatform/docs/screenshots/windows-editor.png)
 
-Drag a thumbnail along the filmstrip to reorder a folder; the order is kept for
-that folder. A file dropped from Finder still opens and edits.
+<img src="crossplatform/docs/screenshots/android-editor.png" alt="Android 模拟器界面" width="340">
 
-## Build
+## 代码
 
-Xcode 26.6.
+- `crossplatform/ui/`：两端直接打包的共享 HTML/CSS/JavaScript，无远程页面、CDN 或 Node 运行时。
+- `crossplatform/native/`：连接上游引擎的 C ABI / JNI，串行工作队列。
+- `crossplatform/windows/`：WinForms + WebView2 外壳、文件对话框、图片编码和安装器定义。
+- `crossplatform/android/`：Java + 系统 WebView、Storage Access Framework、图片编解码。
+- `engine/`：上游胶片模型、Vulkan 后端、LibRaw 与配置数据。
+- `modern_UI/`、`windows_UI/`、`desktop/`：保留的上游实现，本版本不通过这些前端启动。
 
-```bash
-engine/build.sh bundle                 # engine, kernels, baked resources
-cd modern_UI/Spektrafilm
-xcodebuild -project Spektrafilm.xcodeproj -scheme Spektrafilm \
-           -derivedDataPath build/DerivedData build
-```
+## 署名与许可证
 
-Re-run `engine/build.sh bundle` whenever `engine/resources/` changes. If Xcode
-suddenly cannot find `metal`, clean the build folder (⇧⌘K): the Metal
-toolchain's mount path changed under a cached build.
+基线：`a46627d250545a394ca21522f8a28b0fb89e4c42`（`Windows_Linux`），保留上游 Git 历史、许可证与原始数据。
 
-## Test
+- SpektraLab 应用 / 引擎：JamesQiu2005 / Hanze Qiu，**GPL-3.0-or-later**。
+- 胶片模型、原始胶片 / 相纸资料和 print LUT：Andrea Volpato / [spektrafilm](https://github.com/andreavolpato/spektrafilm)，资料为 **CC BY-SA 4.0**。
+- 跨平台外壳和界面修改：本仓库，**GPL-3.0-or-later**。
+- LibRaw：LGPL-2.1；volk：MIT。字体、WebView2、运行时等完整许可证随安装包附带，可在「关于 → 查看开源许可证」查看。
 
-```bash
-xcodebuild -project Spektrafilm.xcodeproj -scheme SpektrafilmTests \
-           -derivedDataPath build/DerivedData test       # ~550 tests, ~6 min
-```
-
-Camera fixtures come from the upstream `spektrafilm` repository through a
-`tests` symlink (`ln -s ../spektrafilm/tests tests`). Without it 25 cases skip
-and the run still reports 0 failures in ~20 s — trust the duration.
-
-## Layout
-
-| | |
-|---|---|
-| `modern_UI/Spektrafilm/` | the app: SwiftUI, AppKit, Metal |
-| `engine/` | the C++20 render engine, its MSL kernels and C ABI |
-| `engine/resources/` | baked constants, 28 film and paper profiles, print LUTs |
-| `ARCHITECTURE.md` | how it fits together — start here |
-| `AGENTS.md` | conventions and the traps that cost real time |
-
-## Windows development
-
-This branch also contains a C++/Vulkan backend, native LibRaw decoding,
-RGB16 TIFF export and Windows desktop viewers.
-See the [Windows build guide](engine/WINDOWS.md) and
-[feature coverage](engine/WINDOWS_FEATURE_COVERAGE.md) for the tested scope.
-The [Qt Quick frontend](windows_UI/README.md) brings the film/print editor layout
-to Windows; the [minimal Win32 viewer](engine/WINDOWS_DESKTOP.md) is also retained.
-The macOS product described above has additional interface and display features.
-
-## Contributing
-
-Pull requests are welcome. Three rules:
-
-- **Windows and Linux work goes to the `Windows_Linux` branch, never to `main`.**
-  `main` is the macOS product; a Windows- or Linux-related pull request against
-  it will be closed and asked to retarget.
-- **Split your work into reviewable commits.** One commit per change, each with
-  a message that says what it does and why. A single commit that dumps a whole
-  feature, a rename and a reformat together cannot be reviewed and will not be
-  merged.
-- **Respect the open-source community.** Keep the licences and credits intact
-  (see below), credit the work you build on, and be civil in issues and reviews.
-
-## Credits and licence
-
-The film process model, its 28 measured color profiles and the print LUTs are
-[spektrafilm](https://github.com/andreavolpato/spektrafilm) by Andrea Volpato;
-4 new measured B&W profiles are by Hanze Qiu;
-SpektraLab is a native C++/Metal port of that engine and the application built
-around it.
-
-| | |
-|---|---|
-| app and engine | GPL-3.0-or-later |
-| film and paper profiles, print LUTs | CC BY-SA 4.0 |
-| metal-cpp | Apache-2.0 |
-
-All texts ship inside the app, under **SpektraLab → About SpektraLab**.
+见 [LICENSE.txt](LICENSE.txt)、[license/](license/) 和 [上游资料声明](engine/resources_product/NOTICE.md)。原始 macOS 介绍可在 [上游仓库](https://github.com/JamesQiu2005/SpektraLab) 阅读。

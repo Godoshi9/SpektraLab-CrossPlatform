@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' data: blob:; script-src 'self'; style-src 'self'; connect-src 'none'; object-src 'none'; base-uri 'none'">
+  <title>SpektraLab · 胶片实验室</title><link rel="stylesheet" href="style.css"><script defer src="app.js"></script>
+</head>
+<body>
+  <svg class="symbols" xmlns="http://www.w3.org/2000/svg"><defs>
+    <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+    <symbol id="i-export" viewBox="0 0 24 24"><path d="M12 15V3m-4 4 4-4 4 4M5 13v7h14v-7"/></symbol>
+    <symbol id="i-image" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8" cy="8" r="1.5"/><path d="m4 18 6-6 4 4 3-3 4 4"/></symbol>
+    <symbol id="i-undo" viewBox="0 0 24 24"><path d="m8 4-5 5 5 5M3 9h11a6 6 0 0 1 0 12"/></symbol>
+    <symbol id="i-reset" viewBox="0 0 24 24"><path d="M4 4v6h6M4 10a8 8 0 1 1 0 5"/></symbol>
+    <symbol id="i-film" viewBox="0 0 24 24"><rect x="3" y="2" width="18" height="20" rx="2"/><path d="M7 2v20M17 2v20M3 7h4m-4 5h4m-4 5h4M17 7h4m-4 5h4m-4 5h4"/></symbol>
+  </defs></svg>
+  <header class="topbar">
+    <div class="brand"><div class="brand-mark"><i></i><i></i><i></i></div><div><strong>SpektraLab<span class="brand-dot">.</span></strong><span class="brand-caption">胶片实验室</span></div></div>
+    <div class="top-actions"><button id="open" class="button secondary" disabled><svg><use href="#i-plus"/></svg><span>导入照片</span></button><button id="export" class="button primary" disabled><svg><use href="#i-export"/></svg><span>导出</span></button></div>
+  </header>
+  <main>
+    <section class="workspace">
+      <div class="canvas-bar"><div class="file-info"><span class="small-dot"></span><span id="filename">新的胶片作品</span></div><div class="history"><button id="undo" class="icon-button" title="撤销 Ctrl+Z" aria-label="撤销" disabled><svg><use href="#i-undo"/></svg></button><button id="reset" class="icon-button" title="重置调整" aria-label="重置调整" disabled><svg><use href="#i-reset"/></svg></button></div></div>
+      <div id="stage" class="stage">
+        <div id="empty" class="empty">
+          <div class="film-art" aria-hidden="true"><div class="film-frame"><span>LIGHT INTO MEMORY</span><svg><use href="#i-image"/></svg><small>SPK  ·  001</small></div></div>
+          <div class="eyebrow">YOUR EVERYDAY DARKROOM</div><h1>让光，留下胶片的温度。</h1><p>选一张照片，挑一卷胶片。<br>从细腻颗粒到柔和光晕，在这里慢慢显影。</p>
+          <button id="empty-open" class="button primary" disabled><svg><use href="#i-plus"/></svg>开始创作</button><span class="format-hint">JPEG · PNG · 相机 RAW</span>
+        </div>
+        <div id="picture" class="picture hidden"><div id="image-wrap" class="image-wrap"><img id="rendered" alt="胶片模拟效果"><div id="before-wrap" class="before-wrap"><img id="original" alt="原始照片"></div><div id="split-line" class="split-line"></div></div></div>
+        <div id="image-label" class="image-label hidden">胶片效果</div>
+        <div id="busy" class="busy hidden" role="status"><span class="spinner"></span><span id="busy-text">正在显影…</span></div>
+      </div>
+      <div class="viewbar"><span id="dimensions" class="muted">在本机处理 · 照片无需上传</span><div id="view-modes" class="segmented"><button data-view="after" class="active" disabled>效果</button><button data-view="before" disabled>原图</button><button data-view="split" disabled>对比</button></div><button id="zoom" class="quiet" disabled>适应画布</button></div>
+      <div id="compare-control" class="compare-control hidden"><label for="split">原图 / 效果</label><input id="split" type="range" min="0" max="100" value="50" aria-label="前后对比位置"></div>
+      <div class="bottom-note"><span class="mini-mark">S / L</span><span id="image-note">每一张，都有自己的色彩。</span><span id="render-time"></span></div>
+    </section>
+    <aside class="editor">
+      <div class="editor-title"><div><span class="eyebrow">THE PROCESS</span><h2>你的暗房</h2></div><button id="about" class="info-button" aria-label="关于与许可证">i</button></div>
+      <nav class="tabs" aria-label="调节分类"><button class="active" data-tab="stock">胶片</button><button data-tab="adjust">调色</button><button data-tab="texture">质感</button></nav>
+      <div class="panels">
+        <section id="panel-stock" class="panel active">
+          <div class="section-heading"><h3>选择胶片</h3><span id="stock-count" class="muted">载入中</span></div>
+          <div id="categories" class="categories"><button data-filter="all" class="active">全部</button><button data-filter="negative">负片</button><button data-filter="positive">正片</button><button data-filter="mono">黑白</button></div>
+          <input id="search" class="search" type="search" placeholder="搜索胶片名称…" aria-label="搜索胶片">
+          <div id="stocks" class="stocks"></div>
+          <div class="paper-section"><label for="paper">印相纸 <span class="muted">PRINT PAPER</span></label><select id="paper" disabled></select><p id="paper-hint" class="helper">胶片与相纸，共同决定最终色彩。</p></div>
+        </section>
+        <section id="panel-adjust" class="panel">
+          <div class="section-heading"><h3>光与色彩</h3><span class="muted">ENLARGER</span></div>
+          <div class="control"><label for="brightness">照片明暗 <output id="brightness-value">0.00</output></label><input id="brightness" type="range" min="-2" max="2" step="0.05" value="0"><div class="range-labels"><span>更暗</span><span>更亮</span></div></div>
+          <div class="control"><label for="exposure">胶片曝光 <output id="exposure-value">0.00 EV</output></label><input id="exposure" type="range" min="-3" max="3" step="0.1" value="0"><p class="helper">改变胶片的明暗层次与反差。</p></div>
+          <div class="control"><label for="warmth">印相色温 <output id="warmth-value">0</output></label><input id="warmth" class="warm-slider" type="range" min="-0.25" max="0.25" step="0.005" value="0"><div class="range-labels"><span>蓝</span><span>黄</span></div></div>
+          <div class="control"><label for="tint">印相色调 <output id="tint-value">0</output></label><input id="tint" class="tint-slider" type="range" min="-0.25" max="0.25" step="0.005" value="0"><div class="range-labels"><span>绿</span><span>洋红</span></div></div>
+          <div class="tip">先选择胶片，再轻轻调整。<br>正片会直接扫描，印相调色仅适用于负片。</div>
+        </section>
+        <section id="panel-texture" class="panel">
+          <div class="section-heading"><h3>胶片的触感</h3><span class="muted">EMULSION</span></div>
+          <div class="control"><label for="grain">颗粒 <output id="grain-value">100%</output></label><input id="grain" type="range" min="0" max="2" step="0.05" value="1"><p class="helper">为画面添上自然的银盐颗粒。</p></div>
+          <div class="control"><label for="halation">光晕 <output id="halation-value">100%</output></label><input id="halation" type="range" min="0" max="3" step="0.05" value="1"><p class="helper">让明亮边缘透出柔和的光。</p></div>
+          <div class="control"><label for="glare">相纸辉光 <output id="glare-value">0%</output></label><input id="glare" type="range" min="0" max="0.5" step="0.01" value="0"></div>
+          <div class="paper-section"><label for="format">胶片画幅</label><select id="format"><option value="36">135 · 35mm</option><option value="56">120 · 6×6</option><option value="69">120 · 6×7</option><option value="90">120 · 6×9</option></select><p class="helper">较大的画幅，颗粒与光晕更细腻。</p></div>
+        </section>
+      </div>
+      <div class="editor-footer"><span class="status-led"></span><span id="status">正在连接渲染引擎…</span></div>
+    </aside>
+  </main>
+  <div id="toast" class="toast hidden" role="status"></div>
+  <dialog id="export-dialog"><form method="dialog"><div class="dialog-top"><span class="eyebrow">KEEP THIS MOMENT</span><button class="close" aria-label="关闭">×</button></div><h2>保存这张作品</h2><p class="dialog-description">导出当前画面的胶片效果。</p><label for="export-format">文件格式</label><select id="export-format"><option value="png">PNG · 无损画质</option><option value="jpg">JPEG · 便于分享</option></select><p id="export-size" class="helper"></p><button id="save" type="button" class="button primary full"><svg><use href="#i-export"/></svg>选择保存位置</button></form></dialog>
+  <dialog id="about-dialog"><form method="dialog"><div class="dialog-top"><span class="eyebrow">SPEKTRALAB CROSSPLATFORM</span><button class="close" aria-label="关闭">×</button></div><h2>光的实验室。</h2><p class="dialog-description">Windows 与 Android，共用同一套界面与 C++ / Vulkan 胶片渲染引擎。</p><p>基于 JamesQiu2005 / SpektraLab。<br>胶片模型与数据源自 Andrea Volpato / spektrafilm；新增黑白数据来自 Hanze Qiu。</p><p class="helper">代码：GPL-3.0-or-later<br>胶片、相纸与 LUT：CC BY-SA 4.0<br>LibRaw：LGPL-2.1<br>当前版本 0.1.0 · sRGB / 8-bit 导出<br>工作尺寸：Windows 最长边 4096，Android 最长边 2048。<br>不包含 macOS 的全部功能；Nikon HE / HE* RAW 暂不支持。</p><button id="licenses" type="button" class="button secondary full">查看开源许可证</button><pre id="license-text" class="hidden"></pre></form></dialog>
+</body></html>

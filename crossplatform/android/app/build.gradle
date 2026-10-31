@@ -1,0 +1,35 @@
+plugins { id 'com.android.application' }
+android {
+    namespace 'app.spektralab.mobile'
+    compileSdk 34
+    buildToolsVersion '36.0.0'
+    buildFeatures { buildConfig true }
+    defaultConfig {
+        applicationId 'app.spektralab.mobile'
+        minSdk 28
+        targetSdk 34
+        versionCode 1
+        versionName '0.1.0'
+    }
+    signingConfigs {
+        release {
+            if (System.getenv('SPEKTRA_KEYSTORE')) {
+                storeFile file(System.getenv('SPEKTRA_KEYSTORE'))
+                storePassword System.getenv('SPEKTRA_STORE_PASSWORD')
+                keyAlias System.getenv('SPEKTRA_KEY_ALIAS') ?: 'spektralab'
+                keyPassword System.getenv('SPEKTRA_KEY_PASSWORD')
+            }
+        }
+    }
+    buildTypes {
+        release {
+            minifyEnabled false
+            if (System.getenv('SPEKTRA_KEYSTORE')) { signingConfig signingConfigs.release }
+        }
+        debug { applicationIdSuffix '.debug'; versionNameSuffix '-debug' }
+    }
+    sourceSets.main.assets.srcDirs = ['../../ui', '../../../build/android-assets']
+    sourceSets.main.jniLibs.srcDirs = ['../../../build/android-jni']
+    packagingOptions { jniLibs { useLegacyPackaging = false } }
+    compileOptions { sourceCompatibility JavaVersion.VERSION_17; targetCompatibility JavaVersion.VERSION_17 }
+}

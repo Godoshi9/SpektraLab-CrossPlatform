@@ -1,0 +1,40 @@
+name: Windows and Android
+on:
+  push:
+    branches: [main]
+    paths: ['crossplatform/**', 'engine/**', '.github/workflows/crossplatform.yml']
+  pull_request:
+    paths: ['crossplatform/**', 'engine/**', '.github/workflows/crossplatform.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  build:
+    runs-on: windows-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: android-actions/setup-android@v3
+      - name: Install pinned Android toolchain
+        shell: pwsh
+        run: sdkmanager 'platforms;android-34' 'build-tools;36.0.0' 'ndk;30.0.16248370'
+      - name: Build both native apps
+        shell: pwsh
+        run: ./crossplatform/scripts/build.ps1 -Platform all
+      - name: Validate shared UI syntax
+        run: node --check crossplatform/ui/app.js
+      - uses: actions/upload-artifact@v4
+        with:
+          name: SpektraLab-Windows-x64
+          path: build/app-windows/
+      - uses: actions/upload-artifact@v4
+        with:
+          name: SpektraLab-Android-debug
+          path: crossplatform/android/app/build/outputs/apk/debug/*.apk
