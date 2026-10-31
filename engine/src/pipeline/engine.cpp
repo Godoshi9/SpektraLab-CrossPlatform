@@ -43,6 +43,10 @@
 #define NOMINMAX
 #endif
 #include <windows.h>
+// RPC headers define small as char; it is also a local image name below.
+#ifdef small
+#undef small
+#endif
 #include <fcntl.h>
 #include <io.h>
 #endif

@@ -118,8 +118,16 @@ if(SPEKTRALAB_PORTABLE_BACKEND)
         HINTS "${SPEKTRALAB_DEPS_DIR}/Vulkan-Headers/include" "$ENV{VULKAN_SDK}/Include"
               "$ENV{VULKAN_SDK}/include"
         NO_CMAKE_FIND_ROOT_PATH)
-    find_program(SPEKTRALAB_GLSLANG NAMES glslangValidator glslang
+    find_program(SPEKTRALAB_GLSLANG NAMES glslangValidator glslang glslc
         HINTS "$ENV{VULKAN_SDK}/Bin" "$ENV{VULKAN_SDK}/bin")
+    # Android's NDK supplies glslc as a host tool. Both compilers consume the
+    # same GLSL; preserve the Vulkan 1.0 target and the shaders' precise math.
+    get_filename_component(spk_shader_compiler_name "${SPEKTRALAB_GLSLANG}" NAME_WE)
+    if(spk_shader_compiler_name STREQUAL "glslc")
+        set(spk_shader_flags --target-env=vulkan1.0)
+    else()
+        set(spk_shader_flags -V --target-env vulkan1.0)
+    endif()
 
     if(SPEKTRALAB_VULKAN_HEADERS AND SPEKTRALAB_GLSLANG)
         # volk, compiled once as C, with the platform's loader name built in.
@@ -155,7 +163,7 @@ if(SPEKTRALAB_PORTABLE_BACKEND)
             set(spirv "${vulkan_shader_dir}/${kernel}.spv")
             add_custom_command(OUTPUT "${spirv}"
                 COMMAND "${CMAKE_COMMAND}" -E make_directory "${vulkan_shader_dir}"
-                COMMAND "${SPEKTRALAB_GLSLANG}" -V --target-env vulkan1.0
+                COMMAND "${SPEKTRALAB_GLSLANG}" ${spk_shader_flags}
                         "-I${CMAKE_CURRENT_SOURCE_DIR}/src/shaders/vulkan"
                         -o "${spirv}" "${shader}"
                 DEPENDS "${shader}" ${vulkan_includes}
@@ -337,13 +345,13 @@ if(SPEKTRALAB_PORTABLE_BACKEND)
                 endif()
                 add_custom_command(OUTPUT "${dir}/spk_math_probe.spv"
                     COMMAND "${CMAKE_COMMAND}" -E make_directory "${dir}"
-                    COMMAND "${SPEKTRALAB_GLSLANG}" -V --target-env vulkan1.0 -DPAIR=0 -DMIXED=${mixed}
+                    COMMAND "${SPEKTRALAB_GLSLANG}" ${spk_shader_flags} -DPAIR=0 -DMIXED=${mixed}
                         -o "${dir}/spk_math_probe.spv" "${CMAKE_CURRENT_SOURCE_DIR}/tests/math_gate_fault.comp"
                     DEPENDS tests/math_gate_fault.comp VERBATIM)
                 list(APPEND gate_fixtures "${dir}/spk_math_probe.spv")
                 if(kind STREQUAL "broken")
                     add_custom_command(OUTPUT "${dir}/spk_split_probe.spv"
-                        COMMAND "${SPEKTRALAB_GLSLANG}" -V --target-env vulkan1.0 -DPAIR=1 -DMIXED=0
+                        COMMAND "${SPEKTRALAB_GLSLANG}" ${spk_shader_flags} -DPAIR=1 -DMIXED=0
                             -o "${dir}/spk_split_probe.spv" "${CMAKE_CURRENT_SOURCE_DIR}/tests/math_gate_fault.comp"
                         DEPENDS "${dir}/spk_math_probe.spv" tests/math_gate_fault.comp VERBATIM)
                     list(APPEND gate_fixtures "${dir}/spk_split_probe.spv")
