@@ -13,6 +13,7 @@
 #if !defined(__APPLE__) || defined(SPK_VULKAN_BACKEND)
 #include "gpu.hpp"
 #include "file_path.hpp"
+#include "windows_memory_budget.hpp"
 
 #include "volk.h"
 
@@ -1107,19 +1108,18 @@ private:
         // Device allocations can also consume Windows commit. Leave room for
         // the editor and for error recovery; physical RAM alone is insufficient.
         MEMORYSTATUSEX status{}; status.dwLength = sizeof(status);
-        uint64_t reserve = 3ull << 30;
+        uint64_t reserve = memory::reserve_bytes;
         // Diagnostic override can only increase protection. Allows recovery
         // testing without actually exhausting the machine's memory.
         if (const char* value = std::getenv("SPEKTRAFILM_TEST_COMMIT_RESERVE_GIB")) {
             if (std::strlen(value) <= 2 && *value >= '0' && *value <= '9') {
                 char* end = nullptr;
                 const unsigned long gib = std::strtoul(value, &end, 10);
-                if (end && !*end && gib >= 3 && gib <= 64) reserve = uint64_t(gib) << 30;
+                if (end && !*end && gib <= 64) reserve = std::max(reserve, uint64_t(gib) << 30);
             }
         }
         if (GlobalMemoryStatusEx(&status) &&
-            (status.ullAvailPageFile <= reserve ||
-             requirements.size > status.ullAvailPageFile - reserve)) {
+            !memory::allows(status.ullAvailPageFile, requirements.size, reserve)) {
             error = "Insufficient system commit budget for Vulkan allocation; retain preview and retry after freeing resources";
             if (memory_pressure) *memory_pressure = true;
             destroy_buffer(&b);

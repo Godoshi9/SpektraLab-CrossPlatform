@@ -25,12 +25,12 @@ const defaults = () => ({film_stock:'kodak_portra_400', print_stock:'kodak_portr
   y_filter_shift:0, m_filter_shift:0, film_format_mm:36});
 let settings=defaults(), renderedSettings=defaults(), catalog={films:[],papers:[]};
 let loaded=false, locked=false, rendering=false, queued=false, filter='all', mode='after', zoomed=false;
-let ready=false, undo=[], renderTimer, toastTimer;
+let ready=false, initializing=false, undo=[], renderTimer, toastTimer;
 let width=0,height=0;
 function toast(text) { $('toast').textContent=text; $('toast').classList.remove('hidden'); clearTimeout(toastTimer); toastTimer=setTimeout(()=>$('toast').classList.add('hidden'),8000); }
 function busy(value,text='正在显影…') { $('busy').classList.toggle('hidden',!value); $('busy-text').textContent=text; refreshEnabled(); }
 function refreshEnabled() {
-  $('open').disabled=$('empty-open').disabled=!ready||locked||rendering;
+  $('open').disabled=$('empty-open').disabled=initializing||locked||rendering;
   $('export').disabled=!loaded||locked||rendering||queued;
   $('reset').disabled=!loaded||locked;
   $('undo').disabled=!loaded||locked||!undo.length;
@@ -110,8 +110,10 @@ function publish(result){
   loaded=true;fit();setView(mode);refreshEnabled();
 }
 async function openPhoto(){
-  if(!ready||locked||rendering)return;locked=true;busy(true,'正在导入照片…');const wanted=snapshot();
-  try{const result=await native('open',{settings:wanted});if(result&&!result.cancelled){undo=[];publish(result);renderedSettings=wanted;zoomed=false;fit();}}
+  if(initializing||locked||rendering)return;
+  if(!ready){await init();if(!ready)return;}
+  locked=true;busy(true,'正在导入照片…');const wanted=snapshot();
+  try{const result=await native('open',{settings:wanted});if(result&&!result.cancelled){undo=[];publish(result);renderedSettings=wanted;zoomed=false;fit();if(result.notice)toast(result.notice);}}
   catch(e){toast('无法导入：'+e.message);}finally{locked=false;busy(false);}
 }
 function fit(){
@@ -162,11 +164,13 @@ document.addEventListener('keydown',e=>{
   if(e.code==='Space'&&loaded&&!e.repeat){e.preventDefault();setView('before');}
 });
 document.addEventListener('keyup',e=>{if(e.code==='Space'&&loaded&&!e.target.matches('input,select,textarea'))setView('after');});
-async function init(){try{
+async function init(){if(initializing)return;initializing=true;refreshEnabled();try{
   const info=await native('init');catalog=info.catalog;
+  $('app-version').textContent=info.version||'0.1.0';
   catalog.films.sort((a,b)=>a.name.localeCompare(b.name));catalog.papers.sort((a,b)=>a.name.localeCompare(b.name));
   ready=true;$('status').textContent=`${info.platform} · 本地胶片引擎已就绪`;
   if(info.sample){settings={...defaults(),...info.sample.settings};renderedSettings={...settings};publish(info.sample);}
   drawStocks();drawPaper();syncControls();
-}catch(e){$('status').textContent='引擎未就绪';toast('无法启动：'+e.message);}}
+}catch(e){ready=false;$('status').textContent='引擎未就绪 · 可点击导入重试';toast('无法启动：'+e.message);}
+finally{initializing=false;refreshEnabled();}}
 init();

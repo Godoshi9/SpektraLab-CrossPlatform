@@ -3,7 +3,7 @@
     <OutputType>WinExe</OutputType><TargetFramework>net8.0-windows</TargetFramework>
     <UseWindowsForms>true</UseWindowsForms><ImplicitUsings>enable</ImplicitUsings><Nullable>enable</Nullable>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks><AssemblyName>SpektraLab</AssemblyName>
-    <ApplicationManifest>app.manifest</ApplicationManifest><Version>0.1.0</Version>
+    <ApplicationManifest>app.manifest</ApplicationManifest><Version>0.1.1</Version>
     <RuntimeIdentifier>win-x64</RuntimeIdentifier><SelfContained>true</SelfContained>
     <RuntimeFrameworkVersion>8.0.33</RuntimeFrameworkVersion>
     <PublishSingleFile>false</PublishSingleFile><DebugType>none</DebugType>

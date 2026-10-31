@@ -11,6 +11,7 @@ internal static class Program {
     [STAThread] static void Main(string[] args){
         ApplicationConfiguration.Initialize();
         if(args.Length>0&&args[0]=="--self-test") { try{SelfTest.Run(args[1]);Environment.ExitCode=0;}catch(Exception e){File.WriteAllText(args[1]+".error.txt",e.ToString());Environment.ExitCode=1;}return; }
+        if(args.Length>0&&args[0]=="--memory-test") { try{SelfTest.RunMemory(args[1]);Environment.ExitCode=0;}catch(Exception e){File.WriteAllText(args[1]+".error.txt",e.ToString());Environment.ExitCode=1;}return; }
         Application.Run(new EditorForm(args));
     }
 }
@@ -22,6 +23,7 @@ internal sealed class EditorForm : Form {
     NativeEngine? engine;
     string sourceName="照片";
     string sourcePath="";
+    string importNotice="";
     bool closing;
     public EditorForm(string[] arguments){
         args=arguments;Text="SpektraLab · 胶片实验室";
@@ -58,7 +60,7 @@ internal sealed class EditorForm : Form {
             string action=message.GetProperty("action").GetString()??"";var payload=message.GetProperty("payload").Clone();
             acquired=await gate.WaitAsync(0);if(!acquired)throw new InvalidOperationException("正在处理，请稍候。");
             object? result=action switch{
-                "init"=>await Task.Run(()=>{engine??=new NativeEngine(Path.Combine(root,"resources"));return new{catalog=JsonNode.Parse(engine.Catalog),platform="Windows"};}),
+                "init"=>await Task.Run(()=>{engine??=new NativeEngine(Path.Combine(root,"resources"));return new{catalog=JsonNode.Parse(engine.Catalog),platform="Windows",version=typeof(Program).Assembly.GetName().Version!.ToString(3)};}),
                 "open"=>await Open(payload.GetProperty("settings").GetRawText()),
                 "render"=>await Task.Run(()=>{RequireEngine().Render(payload.GetProperty("settings").GetRawText());return Frame(false);}),
                 "export"=>await Export(payload.GetProperty("format").GetString()??"png"),
@@ -76,14 +78,12 @@ internal sealed class EditorForm : Form {
         if(args.Length>1&&args[0]=="--ui-test")path=Path.Combine(args[1],"test-scene.png");
         else{if(picker.ShowDialog(this)!=DialogResult.OK)return new{cancelled=true};path=picker.FileName;}
         return await Task.Run(()=>{
-            var n=RequireEngine();string ext=Path.GetExtension(path).ToLowerInvariant();
-            if(new[]{".jpg",".jpeg",".png",".bmp",".tif",".tiff"}.Contains(ext)){
-                using var bitmap=ImageFiles.Decode(path,4096);n.OpenPixels(ImageFiles.Pixels(bitmap),bitmap.Width,bitmap.Height,settings);
-            }else n.OpenRaw(path,settings);
+            var n=RequireEngine();bool limited=PhotoImport.Open(n,path,settings);
+            importNotice=limited?$"当前内存紧张，工作图像已缩小至 {n.Width} × {n.Height}。释放内存后重新导入可获得更大尺寸。":"";
             sourceName=Path.GetFileName(path);sourcePath=Path.GetFullPath(path);return Frame(true);
         });
     }
-    object Frame(bool includeOriginal){var n=RequireEngine();return new{image=ImageFiles.Preview(n.Pixels(),n.Width,n.Height),original=includeOriginal?ImageFiles.Preview(n.Pixels(true),n.Width,n.Height):null,width=n.Width,height=n.Height,name=sourceName,elapsed=n.Elapsed};}
+    object Frame(bool includeOriginal){var n=RequireEngine();return new{image=ImageFiles.Preview(n.Pixels(),n.Width,n.Height),original=includeOriginal?ImageFiles.Preview(n.Pixels(true),n.Width,n.Height):null,width=n.Width,height=n.Height,name=sourceName,elapsed=n.Elapsed,notice=includeOriginal?importNotice:null};}
     async Task<object> Export(string format){
         if(format!="png"&&format!="jpg")throw new InvalidOperationException("不支持的格式");
         var n=RequireEngine();if(n.Width==0)throw new InvalidOperationException("请先导入照片");

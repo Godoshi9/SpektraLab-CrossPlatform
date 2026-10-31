@@ -20,7 +20,7 @@ $notices=@(
   @{path='build/deps/LibRaw-0.22.2/LICENSE.LGPL';name='LibRaw-LGPL.txt'},
   @{path='build/deps/LibRaw-0.22.2/COPYRIGHT';name='LibRaw-COPYRIGHT.txt'}
 )
-$text="SpektraLab CrossPlatform 0.1.0`nSource: https://github.com/Godoshi9/SpektraLab-CrossPlatform`nBased on JamesQiu2005/SpektraLab (Windows_Linux a46627d250545a394ca21522f8a28b0fb89e4c42).`nFilm model and profiles: Andrea Volpato / spektrafilm. Additional profiles: Hanze Qiu.`nAll modifications in crossplatform/ and the portability fixes are GPL-3.0-or-later.`n"
+$text="SpektraLab CrossPlatform`nSource: https://github.com/Godoshi9/SpektraLab-CrossPlatform`nBased on JamesQiu2005/SpektraLab (Windows_Linux a46627d250545a394ca21522f8a28b0fb89e4c42).`nFilm model and profiles: Andrea Volpato / spektrafilm. Additional profiles: Hanze Qiu.`nAll modifications in crossplatform/ and the portability fixes are GPL-3.0-or-later.`n"
 foreach($notice in $notices){$source=Join-Path $repo $notice.path;Copy-Item -LiteralPath $source -Destination (Join-Path $destination ('licenses/'+$notice.name)) -Force;$text+="`n`n===== $($notice.name) =====`n"+[IO.File]::ReadAllText($source)}
 $volk=Get-Content (Join-Path $repo 'engine/third_party/volk/volk.h') -Raw
 $text+="`n`n===== volk (MIT) =====`n"+($volk.Substring($volk.LastIndexOf('Copyright (c)')))

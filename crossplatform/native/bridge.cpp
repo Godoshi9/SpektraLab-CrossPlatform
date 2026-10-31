@@ -3,6 +3,8 @@
 #include "io/raw_decoder.hpp"
 #include "json.hpp"
 #include "profile.hpp"
+#include "pipeline/view.hpp"
+#include "import_budget.hpp"
 #include <algorithm>
 #include <cmath>
 #include <filesystem>
@@ -10,6 +12,9 @@
 #include <memory>
 #include <stdexcept>
 #include <vector>
+#ifdef _WIN32
+#include <windows.h>
+#endif
 
 namespace {
 using spk::Json;
@@ -83,9 +88,17 @@ void open(State& s, const std::vector<float>& rgb, int w, int h, bool raw,
 template<class F> int guarded(void* h, F fn) noexcept {
     if (!h) return 0;
     auto& s = *static_cast<State*>(h);
-    try { fn(s); s.error.clear(); return 1; }
-    catch (const std::exception& e) { s.error = e.what(); return 0; }
-    catch (...) { s.error = "Native operation failed"; return 0; }
+    int success = 0;
+    try { fn(s); s.error.clear(); success = 1; }
+    catch (const std::exception& e) { s.error = e.what(); }
+    catch (...) { s.error = "Native operation failed"; }
+    // This bridge owns a synchronous serial worker. Results and active session
+    // planes remain live; only unused scratch/staging is returned to Windows.
+    // Also reclaim allocations from an unsuccessful replacement image.
+#ifdef _WIN32
+    spk::view::trim_idle_memory(s.engine.get());
+#endif
+    return success;
 }
 }
 extern "C" {
@@ -119,6 +132,22 @@ void* sl_create(const char* resources) {
 void sl_destroy(void* h) { delete static_cast<State*>(h); }
 const char* sl_error(void* h) { return h ? static_cast<State*>(h)->error.c_str() : create_error.c_str(); }
 const char* sl_catalog(void* h) { return h ? static_cast<State*>(h)->catalog.c_str() : "{}"; }
+int sl_prepare_import(void* h, int maximum_edge) {
+    int edge = 0;
+    const int ok = guarded(h, [&](State& s) {
+        require(maximum_edge >= 256 && maximum_edge <= 4096, "Invalid import size limit");
+        spk::view::trim_idle_memory(s.engine.get());
+#ifdef _WIN32
+        MEMORYSTATUSEX status{}; status.dwLength = sizeof(status);
+        require(GlobalMemoryStatusEx(&status), "Unable to query Windows memory budget");
+        edge = sl::import_edge(status.ullAvailPageFile, status.ullAvailPhys, maximum_edge);
+        require(edge != 0, "Insufficient system commit budget for importing a photo");
+#else
+        edge = maximum_edge;
+#endif
+    });
+    return ok ? edge : 0;
+}
 int sl_open_argb(void* h, const uint32_t* pixels, int w, int height, const char* settings) {
     return guarded(h, [&](State& s) {
         require(pixels && w > 0 && height > 0 && int64_t(w) * height <= 20000000, "Image dimensions exceed 20 MP working limit");

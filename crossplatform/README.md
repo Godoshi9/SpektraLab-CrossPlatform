@@ -33,10 +33,12 @@
 ```powershell
 ./crossplatform/scripts/sign-android.ps1
 & "$env:LOCALAPPDATA/Programs/Inno Setup 6/ISCC.exe" crossplatform/windows/installer.iss
-Compress-Archive -Path build/app-windows/* -DestinationPath dist/SpektraLab-0.1.0-Windows-x64-Portable.zip -Force
+Compress-Archive -Path build/app-windows/* -DestinationPath dist/SpektraLab-0.1.1-Windows-x64-Portable.zip -Force
 ```
 
 首次签名会在 **`crossplatform/.signing/`** 创建发布密钥及配置，后续重复使用。请私下备份整个目录，以便覆盖升级；该目录及密钥文件已被 Git 忽略。CI 不持有密钥，上传 Debug APK 和 Windows 构建产物。
+
+项目的 Gradle daemon 已关闭，避免一次性打包完成后继续常驻占用内存。Windows 0.1.1 是导入内存修复，Android 已发布 APK 保持 0.1.0。
 
 ## 验证
 
@@ -46,6 +48,8 @@ Compress-Archive -Path build/app-windows/* -DestinationPath dist/SpektraLab-0.1.
 ./build/app-windows/SpektraLab.exe --self-test D:/SpektraLab-test
 # self-test 先生成 test-scene.png；再驱动真实 WebView 和 native bridge。
 ./build/app-windows/SpektraLab.exe --ui-test D:/SpektraLab-test
+# 大图连续导入、内存自适应及 PNG / 失败保留测试。
+./build/app-windows/SpektraLab.exe --memory-test D:/SpektraLab-memory-test
 # Debug APK 的显式验证入口，release 忽略此参数。
 adb shell am start -n app.spektralab.mobile.debug/app.spektralab.mobile.MainActivity --ez self_test true
 adb pull /sdcard/Android/data/app.spektralab.mobile.debug/files/validation
@@ -56,6 +60,7 @@ UI 自测检查导入、调节、分割对比和 390 CSS px 布局。Android 自
 ## 行为约定
 
 - Native handle 只能在串行队列使用；新图像解码、建会话、渲染全部成功后才替换旧图像。
+- Windows 跨平台构建保留至少 1 GiB 的系统 commit 余量；上游独立桌面构建仍使用 3 GiB。导入前按 commit / 物理内存余量预算工作尺寸，变化期间分配失败可继续缩小重试；每次操作结束释放闲置 scratch / staging，保留当前源图与效果。预算只是预估，每次 Vulkan 分配仍有保护。RAW 原始解码峰值不由工作尺寸限制保证。
 - 共享 UI 合并连续调节，仅发布最新请求；导入、导出时锁定冲突操作。关闭等待工作结束，Android 旋转屏幕保留会话。
 - Native RGBA16 统一转换为 ARGB8，预览与导出使用同一像素。当前输出不携带源 EXIF。
 - Windows 使用系统图像解码和 EXIF 方向处理；Android ImageDecoder 限制尺寸并转到 sRGB。RAW 为上游兼容解码、线性 ProPhoto 输入。

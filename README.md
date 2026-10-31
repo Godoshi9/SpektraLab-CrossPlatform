@@ -6,6 +6,8 @@
 
 **[下载安装包](https://github.com/Godoshi9/SpektraLab-CrossPlatform/releases/latest)** · [构建说明](crossplatform/README.md) · [验证记录](crossplatform/docs/VALIDATION.md)
 
+**Windows 0.1.1** 修复低内存时无法导入：按可用内存选择工作尺寸，完成操作后释放闲置 GPU 缓存，并保留分配保护。Android 安装包仍为 [0.1.0](https://github.com/Godoshi9/SpektraLab-CrossPlatform/releases/download/v0.1.0/SpektraLab-0.1.0-Android.apk)。
+
 ## 使用
 
 1. 导入 JPEG、PNG 或受 LibRaw 支持的相机 RAW。
@@ -21,17 +23,17 @@ Windows 快捷键：`Ctrl+O` 导入，`Ctrl+E` 导出，`Ctrl+Z` 撤销，按住
 
 | 平台 | 文件 | 要求 |
 |---|---|---|
-| Windows | `SpektraLab-0.1.0-Windows-x64-Setup.exe` | Windows 10 1903+ / Windows 11，x64，Vulkan 显卡驱动，Microsoft Edge WebView2 Runtime |
-| Windows 免安装 | `SpektraLab-0.1.0-Windows-x64-Portable.zip` | 解压完整文件夹，运行 `SpektraLab.exe`；不要单独移动 exe |
+| Windows | `SpektraLab-0.1.1-Windows-x64-Setup.exe` | Windows 10 1903+ / Windows 11，x64，Vulkan 显卡驱动，Microsoft Edge WebView2 Runtime |
+| Windows 免安装 | `SpektraLab-0.1.1-Windows-x64-Portable.zip` | 解压完整文件夹，运行 `SpektraLab.exe`；不要单独移动 exe |
 | Android | `SpektraLab-0.1.0-Android.apk` | Android 9+、ARM64；也包含 x86_64 库；需要可用的 Vulkan compute 驱动 |
 
 Windows 包含 .NET 8.0.33 运行时。Android 使用系统文件选择器，无需整个存储空间的访问权限。APK 使用项目独立发布密钥签名；Windows 安装包未做商业代码签名。
 
 ## 当前版本范围
 
-这是 **0.1.0 首个可运行版本**，实现单张照片的核心编辑流程，并非 macOS 应用全部功能的移植。
+当前为 **Windows 0.1.1 / Android 0.1.0**，实现单张照片的核心编辑流程，并非 macOS 应用全部功能的移植。
 
-- 输出为 **sRGB、8-bit PNG/JPEG**。工作图像最长边上限：Windows **4096 px**，Android **2048 px**。较大图像导入时缩小，界面显示实际导出尺寸。RAW 解码仍可能占用较多内存。
+- 输出为 **sRGB、8-bit PNG/JPEG**。工作图像最长边上限：Windows **4096 px**，Android **2048 px**。Windows 会按剩余内存进一步缩小工作图像，并显示提示与实际导出尺寸；释放内存后重新导入可提高尺寸。RAW 解码仍可能占用较多内存。
 - 尚无批量图库、项目持久化、裁切、曲线、Film Edge、Date Back、HDR 或 16-bit 导出界面。撤销记录仅保存在本次会话中。
 - RAW 使用 LibRaw 0.22.2 兼容解码路径；Nikon HE/HE* 不支持。未对全部相机格式和手机 GPU 做实机验证。
 - Android 已在 x86_64 模拟器完成真实原生渲染与导出验证。ARM64 包已交叉编译并校验签名，需要具体手机上的兼容性测试。

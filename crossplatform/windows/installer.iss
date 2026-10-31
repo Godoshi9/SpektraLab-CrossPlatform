@@ -4,7 +4,7 @@
 [Setup]
 AppId={{D9D873F4-83B7-443C-8944-573E582BD889}
 AppName=SpektraLab
-AppVersion=0.1.0
+AppVersion=0.1.1
 AppPublisher=Godoshi9
 AppPublisherURL=https://github.com/Godoshi9/SpektraLab-CrossPlatform
 DefaultDirName={localappdata}\Programs\SpektraLab
@@ -14,7 +14,7 @@ PrivilegesRequired=lowest
 ArchitecturesAllowed=x64compatible
 ArchitecturesInstallIn64BitMode=x64compatible
 OutputDir=..\..\dist
-OutputBaseFilename=SpektraLab-0.1.0-Windows-x64-Setup
+OutputBaseFilename=SpektraLab-0.1.1-Windows-x64-Setup
 Compression=lzma2
 SolidCompression=yes
 WizardStyle=modern

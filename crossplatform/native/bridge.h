@@ -14,6 +14,9 @@ SL_API void* sl_create(const char* resources);
 SL_API void sl_destroy(void* handle);
 SL_API const char* sl_error(void* handle);
 SL_API const char* sl_catalog(void* handle);
+// Trim unused GPU memory, then choose a safe long edge before host decoding.
+// Returns 0 with sl_error when there is not enough budget even for 256 px.
+SL_API int sl_prepare_import(void* handle, int maximum_edge);
 SL_API int sl_open_argb(void* handle, const uint32_t* pixels, int w, int h, const char* settings);
 SL_API int sl_open_raw(void* handle, const char* path, int max_edge, const char* settings);
 SL_API int sl_render(void* handle, const char* settings);

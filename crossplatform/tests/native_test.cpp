@@ -2,6 +2,7 @@
 #include <algorithm>
 #include <cstdint>
 #include <cstdio>
+#include <cstdlib>
 #include <stdexcept>
 #include <string>
 #include <vector>
@@ -22,6 +23,22 @@ int main(int argc,char** argv) {
         check(std::equal(pixels.begin(),pixels.end(),sl_pixels(h,1)),"Original orientation and channels");
         std::vector<uint32_t> before(sl_pixels(h,0),sl_pixels(h,0)+w*ht);
         check(before!=pixels,"Must use film model");
+#ifdef _WIN32
+        // Refuse a replacement without actually exhausting the machine.
+        // Restore the diagnostic environment before checking/throwing.
+        const char* prior = std::getenv("SPEKTRAFILM_TEST_COMMIT_RESERVE_GIB");
+        const std::string saved = prior ? prior : "";
+        _putenv_s("SPEKTRAFILM_TEST_COMMIT_RESERVE_GIB", "64");
+        std::vector<uint32_t> replacement(128*96,0xffa06040u);
+        const int accepted = sl_open_argb(h,replacement.data(),128,96,params);
+        _putenv_s("SPEKTRAFILM_TEST_COMMIT_RESERVE_GIB", saved.c_str());
+        check(!accepted,"Retain commit safety guard");
+        check(sl_width(h)==w&&sl_height(h)==ht,"Failed replacement keeps dimensions");
+        check(std::equal(before.begin(),before.end(),sl_pixels(h,0)),"Memory pressure keeps export pixels");
+        check(sl_prepare_import(h,4096)>=256,"Recover after memory pressure");
+        check(sl_open_argb(h,pixels.data(),w,ht,params),"Import retry after memory pressure");
+        check(std::equal(before.begin(),before.end(),sl_pixels(h,0)),"Retry preserves deterministic output");
+#endif
         check(!sl_render(h,R"({"film_stock":"not_a_stock"})"),"Reject invalid stock");
         check(std::equal(before.begin(),before.end(),sl_pixels(h,0)),"Retain image after bad edit");
         check(!sl_open_raw(h,"missing-file.nef",1024,params),"Reject invalid RAW");
